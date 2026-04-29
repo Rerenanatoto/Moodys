@@ -80,15 +80,17 @@ def find_rating_from_value(value: float, thresholds_ranges: Dict) -> str:
     """Encontra o rating baseado em um valor e thresholds"""
     for range_key, rating in thresholds_ranges.items():
         if "-" in range_key:
-            min_val, max_val = map(float, range_key.split("-"))
+            parts = range_key.split("-")
+            min_val = float(parts[0].replace(",", ""))
+            max_val = float(parts[1].replace(",", ""))
             if min_val <= value < max_val:
                 return rating
         elif ">" in range_key:
-            min_val = float(range_key.replace(">", ""))
+            min_val = float(range_key.replace(">", "").replace(",", ""))
             if value > min_val:
                 return rating
         elif "<" in range_key:
-            max_val = float(range_key.replace("<", ""))
+            max_val = float(range_key.replace("<", "").replace(",", ""))
             if value < max_val:
                 return rating
     return "b3"
