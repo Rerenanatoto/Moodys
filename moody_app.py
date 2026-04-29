@@ -23,6 +23,19 @@ st.markdown("""
         color: #1a1a1a;
     }
 
+    /* ---- Barra preta do topo — mesma cor da página ---- */
+    header[data-testid="stHeader"] {
+        background-color: #F0EDE8 !important;
+        border-bottom: none !important;
+    }
+    .stApp > header {
+        background-color: #F0EDE8 !important;
+    }
+    /* Toolbar icons no topo */
+    header[data-testid="stHeader"] [data-testid="stToolbar"] {
+        background-color: #F0EDE8 !important;
+    }
+
     /* Sidebar */
     section[data-testid="stSidebar"] {
         background-color: #E4E0DA;
@@ -39,10 +52,63 @@ st.markdown("""
         color: #1a1a1a !important;
     }
 
-    /* Labels */
+    /* Labels gerais */
     label, .stSelectbox label, .stNumberInput label,
     .stSlider label, .stRadio label, p, span, div {
         color: #1a1a1a !important;
+    }
+
+    /* ---- Inputs: fundo BRANCO, letra PRETA ---- */
+    /* Number inputs */
+    .stNumberInput input,
+    .stNumberInput [data-testid="stNumberInput"] input {
+        background-color: #FFFFFF !important;
+        color: #1a1a1a !important;
+        -webkit-text-fill-color: #1a1a1a !important;
+    }
+
+    /* Selectbox */
+    .stSelectbox [data-testid="stMarkdownContainer"],
+    .stSelectbox > div > div,
+    .stSelectbox > div > div > div,
+    [data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+        color: #1a1a1a !important;
+    }
+    [data-baseweb="select"] * {
+        color: #1a1a1a !important;
+        -webkit-text-fill-color: #1a1a1a !important;
+    }
+    [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+    }
+
+    /* Dropdown menu (lista aberta) */
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] ul,
+    [data-baseweb="popover"] li,
+    [data-baseweb="menu"],
+    [data-baseweb="menu"] ul,
+    [data-baseweb="menu"] li {
+        background-color: #FFFFFF !important;
+        color: #1a1a1a !important;
+    }
+    [data-baseweb="menu"] li:hover {
+        background-color: #E3F2FD !important;
+    }
+
+    /* Slider */
+    .stSlider [data-testid="stTickBarMin"],
+    .stSlider [data-testid="stTickBarMax"],
+    .stSlider [data-baseweb="slider"] div {
+        color: #1a1a1a !important;
+    }
+
+    /* Number input +/- buttons */
+    .stNumberInput button {
+        background-color: #FFFFFF !important;
+        color: #1a1a1a !important;
+        border-color: #ccc !important;
     }
 
     /* Metrics */
@@ -94,15 +160,6 @@ st.markdown("""
     }
     .legend-red  { color: #E53935; font-weight: 600; }
     .legend-green { color: #43A047; font-weight: 600; }
-
-    /* ---- Selectbox de navegação mais destaque ---- */
-    .nav-select {
-        background-color: #FAF9F7;
-        padding: 16px 20px 8px 20px;
-        border-radius: 10px;
-        border: 1px solid #d0cdc8;
-        margin-bottom: 20px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -284,15 +341,14 @@ def calculate_event_risk(ext, pol, bank, liq):
 # Título
 # ============================================================
 
-st.title("📊 Moody's Sovereign Rating Methodology")
+st.title("\U0001F4CA Moody's Sovereign Rating Methodology")
 
 # ============================================================
-# Seleção suspensa (dropdown) — como no Excel
+# Seleção suspensa (dropdown) — sem label visível
 # ============================================================
 
-st.markdown('<div class="nav-select">', unsafe_allow_html=True)
 page = st.selectbox(
-    "📂 Selecione a seção:",
+    "Selecione a seção",
     [
         "Economic Strength",
         "Institutions & Governance",
@@ -302,9 +358,9 @@ page = st.selectbox(
         "Summary",
         "Methodology"
     ],
-    key="nav_page"
+    key="nav_page",
+    label_visibility="collapsed"
 )
-st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # SEÇÃO: Economic Strength
@@ -699,14 +755,14 @@ elif page == "Summary":
     c1, c2 = st.columns(2)
     with c1:
         st.download_button(
-            label="📥 Download as JSON",
+            label="\U0001F4E5 Download as JSON",
             data=json.dumps(export_data, indent=2),
             file_name="moody_rating_analysis.json",
             mime="application/json"
         )
     with c2:
         st.download_button(
-            label="📥 Download as CSV",
+            label="\U0001F4E5 Download as CSV",
             data=pd.DataFrame([export_data]).to_csv(index=False),
             file_name="moody_rating_analysis.csv",
             mime="text/csv"
@@ -794,3 +850,4 @@ elif page == "Methodology":
     - Analysts may apply judgment adjustments based on specific circumstances
     - This is a simplified simulation for educational purposes
     """)
+
