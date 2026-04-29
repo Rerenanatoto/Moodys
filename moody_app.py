@@ -97,7 +97,14 @@ def find_rating_from_value(value: float, thresholds_ranges: Dict) -> str:
 
 def rating_to_numeric(rating: str) -> float:
     """Converte rating para valor numérico (para média)"""
-    return float(RATING_SCALE.index(rating.lower()))
+    r = rating.lower()
+    # Mapeia ratings base (sem modificador) para o meio da faixa
+    BASE_TO_MID = {
+        "aa": "aa2", "a": "a2", "baa": "baa2",
+        "ba": "ba2", "b": "b2", "caa": "caa2"
+    }
+    r = BASE_TO_MID.get(r, r)
+    return float(RATING_SCALE.index(r))
 
 def numeric_to_rating(numeric_val: float) -> str:
     """Converte valor numérico para rating"""
