@@ -63,18 +63,6 @@ st.markdown("""
     /* Divider */
     hr { border-color: #ccc !important; }
 
-    /* Expanders */
-    details[data-testid="stExpander"] {
-        background-color: #FAF9F7;
-        border: 1px solid #d0cdc8;
-        border-radius: 10px;
-        margin-bottom: 12px;
-    }
-    details[data-testid="stExpander"] summary {
-        font-weight: 600;
-        font-size: 1.05rem;
-    }
-
     /* Botões de download */
     .stDownloadButton > button {
         background-color: #0D47A1;
@@ -87,20 +75,18 @@ st.markdown("""
         color: white;
     }
 
-    /* ---- Indicadores vermelho / verde nos campos ---- */
+    /* ---- Indicadores vermelho / verde (FUNDO) ---- */
     .field-pending {
-        border-left: 5px solid #E53935;
-        padding-left: 12px;
+        background-color: rgba(229, 57, 53, 0.10);
+        padding: 10px 12px 4px 12px;
         margin-bottom: 8px;
-        border-radius: 4px;
-        background-color: rgba(229, 57, 53, 0.04);
+        border-radius: 8px;
     }
     .field-done {
-        border-left: 5px solid #43A047;
-        padding-left: 12px;
+        background-color: rgba(67, 160, 71, 0.10);
+        padding: 10px 12px 4px 12px;
         margin-bottom: 8px;
-        border-radius: 4px;
-        background-color: rgba(67, 160, 71, 0.04);
+        border-radius: 8px;
     }
     .field-legend {
         font-size: 0.78rem;
@@ -108,36 +94,36 @@ st.markdown("""
     }
     .legend-red  { color: #E53935; font-weight: 600; }
     .legend-green { color: #43A047; font-weight: 600; }
+
+    /* ---- Selectbox de navegação mais destaque ---- */
+    .nav-select {
+        background-color: #FAF9F7;
+        padding: 16px 20px 8px 20px;
+        border-radius: 10px;
+        border: 1px solid #d0cdc8;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ============================================================
-# Helper: wrapper para campo com borda vermelha/verde
+# Helper: campo com fundo vermelho/verde
 # ============================================================
 
 def _mark(key: str):
-    """Callback genérico de on_change: marca campo como modificado."""
+    """Callback on_change: marca campo como modificado."""
     st.session_state[f"_mod_{key}"] = True
 
-def field_wrapper_open(key: str) -> str:
-    """Retorna a tag HTML de abertura com a classe CSS correta."""
+def render_field_open(key: str):
     modified = st.session_state.get(f"_mod_{key}", False)
     css_class = "field-done" if modified else "field-pending"
-    return f'<div class="{css_class}">'
-
-def field_wrapper_close() -> str:
-    return '</div>'
-
-def render_field_open(key: str):
-    """Renderiza abertura do wrapper."""
-    st.markdown(field_wrapper_open(key), unsafe_allow_html=True)
+    st.markdown(f'<div class="{css_class}">', unsafe_allow_html=True)
 
 def render_field_close():
-    st.markdown(field_wrapper_close(), unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def legend():
-    """Mostra legendinha vermelho/verde."""
     st.markdown(
         '<p class="field-legend">'
         '<span class="legend-red">■ Valor padrão (pendente)</span> &nbsp; '
@@ -219,14 +205,14 @@ def numeric_to_rating(numeric_val: float) -> str:
     return RATING_SCALE[idx]
 
 def get_wgi_score_category(wgi_score: float) -> str:
-    if wgi_score > 1.5:   return "aaa"
-    elif wgi_score > 1.0: return "aa"
-    elif wgi_score > 0.5: return "a"
-    elif wgi_score > 0.0: return "baa"
+    if wgi_score > 1.5:    return "aaa"
+    elif wgi_score > 1.0:  return "aa"
+    elif wgi_score > 0.5:  return "a"
+    elif wgi_score > 0.0:  return "baa"
     elif wgi_score > -0.5: return "ba"
     elif wgi_score > -1.0: return "b"
     elif wgi_score > -1.5: return "caa"
-    else: return "ca"
+    else:                  return "ca"
 
 # ============================================================
 # Funções de cálculo
@@ -237,7 +223,6 @@ def calculate_economic_strength(gdp_growth, mad_volatility, gdp_per_capita_ppp, 
     scores['growth'] = find_rating_from_value(gdp_growth, GDP_GROWTH_THRESHOLDS)
     scores['volatility'] = find_rating_from_value(mad_volatility, MAD_VOLATILITY_THRESHOLDS)
     scores['scale'] = find_rating_from_value(gdp_per_capita_ppp, SCALE_ECONOMY_THRESHOLDS)
-
     g = rating_to_numeric(scores['growth'])
     v = rating_to_numeric(scores['volatility'])
     s = rating_to_numeric(scores['scale'])
@@ -248,15 +233,12 @@ def calculate_institutions_governance(wgi_ge, wgi_rq, wgi_va, data_quality):
     scores = {}
     wgi_avg = (wgi_ge + wgi_rq) / 2
     scores['legislative'] = get_wgi_score_category(wgi_avg)
-
     if wgi_va > 1.0:    scores['judiciary'] = "aa"
     elif wgi_va > 0.0:  scores['judiciary'] = "a"
     else:                scores['judiciary'] = "baa"
-
     if data_quality >= 8:   scores['transparency'] = "aa"
     elif data_quality >= 6: scores['transparency'] = "a"
     else:                   scores['transparency'] = "baa"
-
     l = rating_to_numeric(scores['legislative'])
     j = rating_to_numeric(scores['judiciary'])
     t = rating_to_numeric(scores['transparency'])
@@ -271,17 +253,14 @@ def calculate_fiscal_strength(primary_balance_gdp, debt_gdp, interest_burden, re
     elif primary_balance_gdp > -3: scores['performance'] = "baa"
     elif primary_balance_gdp > -6: scores['performance'] = "ba"
     else:                          scores['performance'] = "b"
-
     if debt_gdp < 30:   scores['burden'] = "aaa"
     elif debt_gdp < 50: scores['burden'] = "aa"
     elif debt_gdp < 70: scores['burden'] = "a"
     elif debt_gdp < 90: scores['burden'] = "baa"
     else:                scores['burden'] = "ba"
-
     if revenue_gdp > 25:   scores['flexibility'] = "aa"
     elif revenue_gdp > 20: scores['flexibility'] = "a"
     else:                   scores['flexibility'] = "baa"
-
     p = rating_to_numeric(scores['performance'])
     b = rating_to_numeric(scores['burden'])
     f = rating_to_numeric(scores['flexibility'])
@@ -306,12 +285,32 @@ def calculate_event_risk(ext, pol, bank, liq):
 # ============================================================
 
 st.title("📊 Moody's Sovereign Rating Methodology")
-st.caption("Simulador interativo — clique em cada seção para expandir e preencher os dados")
 
 # ============================================================
-# EXPANDER 1: Economic Strength
+# Seleção suspensa (dropdown) — como no Excel
 # ============================================================
-with st.expander("🟦  **Economic Strength**", expanded=False):
+
+st.markdown('<div class="nav-select">', unsafe_allow_html=True)
+page = st.selectbox(
+    "📂 Selecione a seção:",
+    [
+        "Economic Strength",
+        "Institutions & Governance",
+        "Fiscal Strength",
+        "Event Risk",
+        "Results",
+        "Summary",
+        "Methodology"
+    ],
+    key="nav_page"
+)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================
+# SEÇÃO: Economic Strength
+# ============================================================
+if page == "Economic Strength":
+    st.header("Economic Strength Assessment")
     legend()
 
     col1, col2, col3 = st.columns(3)
@@ -373,9 +372,10 @@ with st.expander("🟦  **Economic Strength**", expanded=False):
     st.session_state['econ_score'] = econ_score
 
 # ============================================================
-# EXPANDER 2: Institutions & Governance
+# SEÇÃO: Institutions & Governance
 # ============================================================
-with st.expander("🟦  **Institutions & Governance**", expanded=False):
+elif page == "Institutions & Governance":
+    st.header("Institutions and Governance Strength Assessment")
     legend()
 
     col1, col2 = st.columns(2)
@@ -440,9 +440,10 @@ with st.expander("🟦  **Institutions & Governance**", expanded=False):
     st.session_state['inst_score'] = inst_score
 
 # ============================================================
-# EXPANDER 3: Fiscal Strength
+# SEÇÃO: Fiscal Strength
 # ============================================================
-with st.expander("🟦  **Fiscal Strength**", expanded=False):
+elif page == "Fiscal Strength":
+    st.header("Fiscal Strength Assessment")
     legend()
 
     col1, col2 = st.columns(2)
@@ -507,9 +508,10 @@ with st.expander("🟦  **Fiscal Strength**", expanded=False):
     st.session_state['fiscal_score'] = fiscal_score
 
 # ============================================================
-# EXPANDER 4: Event Risk
+# SEÇÃO: Event Risk
 # ============================================================
-with st.expander("🟦  **Susceptibility to Event Risk**", expanded=False):
+elif page == "Event Risk":
+    st.header("Susceptibility to Event Risk")
     legend()
 
     col1, col2 = st.columns(2)
@@ -573,9 +575,10 @@ with st.expander("🟦  **Susceptibility to Event Risk**", expanded=False):
     st.session_state['event_risk'] = event_risk
 
 # ============================================================
-# EXPANDER 5: Results
+# SEÇÃO: Results
 # ============================================================
-with st.expander("📊  **Results**", expanded=False):
+elif page == "Results":
+    st.header("Rating Results")
 
     econ = st.session_state.get('econ_score', 'baa1')
     inst = st.session_state.get('inst_score', 'baa1')
@@ -635,9 +638,10 @@ with st.expander("📊  **Results**", expanded=False):
     st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
-# EXPANDER 6: Summary & Export
+# SEÇÃO: Summary
 # ============================================================
-with st.expander("📋  **Summary & Export**", expanded=False):
+elif page == "Summary":
+    st.header("Summary & Export")
 
     econ = st.session_state.get('econ_score', 'baa1')
     inst = st.session_state.get('inst_score', 'baa1')
@@ -723,9 +727,10 @@ with st.expander("📋  **Summary & Export**", expanded=False):
     st.dataframe(pd.DataFrame(comparison_data), use_container_width=True, hide_index=True)
 
 # ============================================================
-# EXPANDER 7: Methodology
+# SEÇÃO: Methodology
 # ============================================================
-with st.expander("📖  **Methodology**", expanded=False):
+elif page == "Methodology":
+    st.header("Moody's Sovereign Rating Methodology")
 
     st.markdown("""
     ### Overview
