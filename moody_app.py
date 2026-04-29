@@ -12,6 +12,94 @@ from typing import Dict, Tuple
 st.set_page_config(page_title="Moody's Rating Methodology", layout="wide")
 
 # ============================================================
+# CSS customizado — fundo branco, texto escuro, radio estilizado
+# ============================================================
+
+st.markdown("""
+<style>
+    /* Fundo branco geral */
+    .stApp {
+        background-color: #FFFFFF;
+        color: #1a1a1a;
+    }
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #F0F2F6;
+    }
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] span {
+        color: #1a1a1a !important;
+    }
+
+    /* Headers */
+    h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #1a1a1a !important;
+    }
+
+    /* Labels e textos */
+    label, .stSelectbox label, .stNumberInput label, .stSlider label,
+    .stRadio label, p, span, div {
+        color: #1a1a1a !important;
+    }
+
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        color: #0D47A1 !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #1a1a1a !important;
+    }
+
+    /* Dataframe */
+    .stDataFrame {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+    }
+
+    /* Divider */
+    hr {
+        border-color: #e0e0e0 !important;
+    }
+
+    /* Radio buttons - estilo "bolinha" visível */
+    .stRadio > div {
+        gap: 0.3rem;
+    }
+    .stRadio > div > label {
+        background-color: #FFFFFF;
+        border: 1px solid #d0d0d0;
+        border-radius: 8px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .stRadio > div > label:hover {
+        background-color: #E3F2FD;
+    }
+    .stRadio > div > label[data-checked="true"] {
+        background-color: #0D47A1;
+        color: white !important;
+        border-color: #0D47A1;
+    }
+
+    /* Botões de download */
+    .stDownloadButton > button {
+        background-color: #0D47A1;
+        color: white;
+        border: none;
+        border-radius: 6px;
+    }
+    .stDownloadButton > button:hover {
+        background-color: #1565C0;
+        color: white;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
 # Thresholds e Constantes (da metodologia Moody's)
 # ============================================================
 
@@ -96,9 +184,9 @@ def find_rating_from_value(value: float, thresholds_ranges: Dict) -> str:
     return "b3"
 
 def rating_to_numeric(rating: str) -> float:
-    """Converte rating para valor numérico (para média)"""
+    """Converte rating para valor numérico (para média).
+       Mapeia ratings base (sem modificador) ao meio da faixa."""
     r = rating.lower()
-    # Mapeia ratings base (sem modificador) para o meio da faixa
     BASE_TO_MID = {
         "aa": "aa2", "a": "a2", "baa": "baa2",
         "ba": "ba2", "b": "b2", "caa": "caa2"
@@ -157,7 +245,7 @@ def calculate_economic_strength(
     scale_score = find_rating_from_value(gdp_per_capita_ppp, SCALE_ECONOMY_THRESHOLDS)
     scores['scale'] = scale_score
 
-    # Agregação simples (média dos três)
+    # Agregação simples (média ponderada)
     growth_numeric = rating_to_numeric(growth_score)
     volatility_numeric = rating_to_numeric(volatility_score)
     scale_numeric = rating_to_numeric(scale_score)
@@ -171,7 +259,7 @@ def calculate_institutions_governance(
     wgi_govt_effectiveness: float,
     wgi_regulatory_quality: float,
     wgi_voice_accountability: float,
-    data_quality: float  # 1-10
+    data_quality: float
 ) -> Tuple[str, Dict]:
     """Calcula Institutions and Governance Strength"""
 
@@ -268,7 +356,7 @@ def calculate_fiscal_strength(
     return final_score, scores
 
 def calculate_event_risk(
-    external_vulnerability: str,  # low, moderate, high
+    external_vulnerability: str,
     political_risk: str,
     banking_sector_risk: str,
     liquidity_risk: str
@@ -294,27 +382,39 @@ def calculate_event_risk(
         return "High", risks
 
 # ============================================================
-# Interface Streamlit
+# Navegação por Radio na Sidebar (estilo "bolinha")
+# ============================================================
+
+st.sidebar.title("📊 Moody's Sovereign")
+st.sidebar.markdown("---")
+
+page = st.sidebar.radio(
+    "Navegação",
+    [
+        "Economic Strength",
+        "Institutions & Governance",
+        "Fiscal Strength",
+        "Event Risk",
+        "Results",
+        "Summary",
+        "Methodology"
+    ],
+    label_visibility="collapsed"
+)
+
+st.sidebar.markdown("---")
+st.sidebar.caption("Simulador interativo — metodologia Moody's para ratings soberanos")
+
+# ============================================================
+# Título do App
 # ============================================================
 
 st.title("📊 Moody's Sovereign Rating Methodology")
-st.markdown("Simulador interativo da metodologia Moody's para ratings soberanos")
-
-# Tabs principais
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "Economic Strength",
-    "Institutions & Governance",
-    "Fiscal Strength",
-    "Event Risk",
-    "Results",
-    "Summary",
-    "Methodology"
-])
 
 # ============================================================
-# TAB 1: Economic Strength
+# PAGE: Economic Strength
 # ============================================================
-with tab1:
+if page == "Economic Strength":
     st.header("Economic Strength Assessment")
 
     col1, col2, col3 = st.columns(3)
@@ -367,9 +467,9 @@ with tab1:
     st.session_state['econ_score'] = econ_score
 
 # ============================================================
-# TAB 2: Institutions & Governance
+# PAGE: Institutions & Governance
 # ============================================================
-with tab2:
+elif page == "Institutions & Governance":
     st.header("Institutions and Governance Strength Assessment")
 
     col1, col2 = st.columns(2)
@@ -430,9 +530,9 @@ with tab2:
     st.session_state['inst_score'] = inst_score
 
 # ============================================================
-# TAB 3: Fiscal Strength
+# PAGE: Fiscal Strength
 # ============================================================
-with tab3:
+elif page == "Fiscal Strength":
     st.header("Fiscal Strength Assessment")
 
     col1, col2 = st.columns(2)
@@ -486,9 +586,9 @@ with tab3:
     st.session_state['fiscal_score'] = fiscal_score
 
 # ============================================================
-# TAB 4: Event Risk
+# PAGE: Event Risk
 # ============================================================
-with tab4:
+elif page == "Event Risk":
     st.header("Susceptibility to Event Risk")
 
     col1, col2 = st.columns(2)
@@ -541,9 +641,9 @@ with tab4:
     st.session_state['event_risk'] = event_risk
 
 # ============================================================
-# TAB 5: Results
+# PAGE: Results
 # ============================================================
-with tab5:
+elif page == "Results":
     st.header("Rating Results")
 
     # Recuperar scores calculados
@@ -557,10 +657,9 @@ with tab5:
     inst_numeric = rating_to_numeric(inst)
     economic_resiliency = numeric_to_rating((econ_numeric + inst_numeric) / 2)
 
-    # Calcular Government Financial Strength (combinação ponderada)
+    # Calcular Government Financial Strength
     fiscal_numeric = rating_to_numeric(fiscal)
-    # Pesos dinâmicos conforme a metodologia (exemplo: 60% resiliência, 40% fiscal)
-    gfs_numeric = economic_resiliency_numeric = (econ_numeric + inst_numeric) / 2
+    gfs_numeric = (econ_numeric + inst_numeric) / 2
     gfs = numeric_to_rating(gfs_numeric * 0.6 + fiscal_numeric * 0.4)
 
     # Calcular rating indicativo
@@ -604,22 +703,28 @@ with tab5:
         theta=factors,
         fill='toself',
         name='Scores',
-        line=dict(color='#636EFA')
+        line=dict(color='#0D47A1')
     ))
 
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 20])),
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 20]),
+            bgcolor='white'
+        ),
         showlegend=True,
         title="Rating Factor Profiles (lower is better)",
-        height=500
+        height=500,
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='#1a1a1a')
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
-# TAB 6: Summary & Export
+# PAGE: Summary
 # ============================================================
-with tab6:
+elif page == "Summary":
     st.header("Summary & Export")
 
     # Recuperar todos os dados
@@ -655,7 +760,7 @@ with tab6:
         summary_data = {
             "Factor": ["Economic Strength", "Institutions & Governance", "Fiscal Strength", "Event Risk"],
             "Score": [econ.upper(), inst.upper(), fiscal.upper(), event],
-            "Status": ["✓", "✓", "✓", "✓"]
+            "Status": ["\u2713", "\u2713", "\u2713", "\u2713"]
         }
         df_summary = pd.DataFrame(summary_data)
         st.dataframe(df_summary, use_container_width=True, hide_index=True)
@@ -705,7 +810,7 @@ with tab6:
 
     st.divider()
 
-    # Comparison with other sovereigns (example)
+    # Comparison with other sovereigns
     st.subheader("Comparison with Rating Categories")
 
     comparison_data = {
@@ -726,9 +831,9 @@ with tab6:
     st.dataframe(df_comparison, use_container_width=True, hide_index=True)
 
 # ============================================================
-# TAB 7: Methodology
+# PAGE: Methodology
 # ============================================================
-with tab7:
+elif page == "Methodology":
     st.header("Moody's Sovereign Rating Methodology")
 
     st.markdown("""
